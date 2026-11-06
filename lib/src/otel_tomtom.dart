@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_tomtom_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_tomtom';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class TomtomResult {
+  /// Creates a result.
   const TomtomResult({
     this.itemCount,
     this.creditsCharged,
@@ -43,8 +44,13 @@ class TomtomResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class TomtomCallResult<T> {
+  /// Creates a call result.
   const TomtomCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final TomtomResult? result;
 }
@@ -75,50 +81,50 @@ Future<T> tracedTomtom<T>({
   final span = _tracer().startSpan(
     spanName,
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
     if (r.result != null) {
       final extras = <Attribute<Object>>[];
       if (r.result!.itemCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tomtom.item_count',
           r.result!.itemCount!,
         ));
       }
       if (r.result!.creditsCharged != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'tomtom.credits_charged',
           r.result!.creditsCharged!,
         ));
       }
       if (r.result!.travelMode != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tomtom.travel_mode',
           r.result!.travelMode!,
         ));
       }
       if (r.result!.trafficUsed != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'tomtom.traffic_used',
           r.result!.trafficUsed!,
         ));
       }
       if (r.result!.tier != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tomtom.tier',
           r.result!.tier!,
         ));
       }
       if (r.result!.requestId != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'tomtom.request.id',
           r.result!.requestId!,
         ));
       }
       if (r.result!.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           r.result!.statusCode!,
         ));
@@ -129,13 +135,13 @@ Future<T> tracedTomtom<T>({
           );
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
